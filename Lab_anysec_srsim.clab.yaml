@@ -1,0 +1,35 @@
+name: Lab_Anysec
+topology:
+  kinds:
+    nokia_srsim:
+      license: /home/jesusdavid/Licenses/SR_SIM25_1.txt
+      image: localhost/nokia/srsim:25.10.R2
+    linux:
+      image: ghcr.io/srl-labs/network-multitool:latest
+  nodes:
+    PE1:
+      kind: nokia_srsim
+      type: sr-1x-48d
+      components:
+        - slot: A # CPM  (namespace owner -> clab-anysec-pe1)
+        - slot: 1 # IOM  (data links attach here, referenced as pe1:...
+    PE2:
+      kind: nokia_srsim
+      type: sr-1x-48d
+      components:
+        - slot: A # CPM  (namespace owner -> clab-anysec-pe1)
+        - slot: 1 # IOM  (data links attach here, referenced as pe1:...
+    P1:
+      kind: nokia_srsim
+      type: sr-1
+    Customer1:
+      kind: linux
+    Customer2:
+      kind: linux
+  links:
+    # PE1 <-> P1 <-> PE2  (transit core)
+    - endpoints: [ "PE1:1/1/c1/1", "P1:1/1/c1/1" ]
+    - endpoints: [ "P1:1/1/c2/1", "PE2:1/1/c1/1" ]
+    # clients into the Epipe SAP (VLAN 1001)
+    - endpoints: [ "Customer1:eth1", "PE1:1/1/c6/1" ]
+    - endpoints: [ "Customer2:eth1", "PE2:1/1/c6/1" ]
