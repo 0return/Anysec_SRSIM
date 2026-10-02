@@ -45,13 +45,56 @@ show anysec tunnel-encryption detail       # Peer Oper State: Up + counters
 show macsec connectivity-association "CA_ANYSEC" detail  # MACsec
 
 
+On/off test: same ping, encrypted and in clear
+
+Keep one ping running for the whole test and capture on both P1 ports. On SR-SIM a veth capture shows only the ingress direction. Port e1-1-c1-1 gives you PE1 to PE2 traffic, and port e1-1-c2-1 gives you PE2 to PE1 traffic.
+
 
 
 Public Wireshark recognizes the frame as MACSEC but does not decode the ANYsec-over-MPLS detail or the payload — which is exactly the proof it's encrypted. For the full breakdown, install the Lua dissectors (anysec-dissectors). SR-SIM note: veth capture only shows the ingress direction; for this point that's enough.
 
-7.1 ANYsec enabled — encrypted traffic
 
-You see opaque MACsec frames; the icmp/arp filters don't match on the core because everything (including the L2 Epipe ARP) rides inside the encryption.
+# Step 1: ANYsec ON (baseline)
+
+show anysec tunnel-encryption detail shows Peer Oper State: Up.
+
+In Wireshark the core carries MPLS 21002 / 32101 followed by MACsec (0x88e5) frames.
+The icmp and arp filters match nothing. Even the customer's ARP rides inside the encryption.
+
+
+# Step 2: ANYsec OFF
+
+Shut the peer on both PEs, so that neither side keeps encrypting.
+
+
+Classic CLI:
+
+# PE1
+
+configure anysec tunnel-encryption encryption-group "EG_ANYSEC" peer 10.1.1.2 shutdown
+
+
+# PE2
+
+configure anysec tunnel-encryption encryption-group "EG_ANYSEC" peer 10.1.1.1 shutdown
+
+MD-CLI (PE1 shown; on PE2 use peer 10.1.1.1):
+
+edit-config private
+
+/configure anysec tunnel-encryption encryption-group "EG_ANYSEC" peer 10.1.1.2 admin-state disable
+
+commit
+
+
+Expected results:
+
+show anysec tunnel-encryption detail no longer shows the peer as Up.
+The ping keeps working. STP_ANYSEC is configured with no rx-must-be-encrypted, so each PE still accepts unencrypted traffic.
+In Wireshark the core shows MPLS 21002 / service label followed by the customer's Ethernet frame. ARP and ICMP between 192.168.100.1 and 192.168.100.2 are fully readable, and the icmp filter matches.
+The second label matches the Egress Label in show service id 1001 sdp 12:1001 detail.
+
+
 
 <img width="1360" height="474" alt="image" src="https://github.com/user-attachments/assets/f8d0e536-827f-4544-a2b6-1ae0cba6f8d3" />
 
