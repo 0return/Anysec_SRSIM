@@ -28,18 +28,13 @@ Run on PE1 (and the equivalent on PE2):
 
 
 show router isis adjacency                 # adjacency with P1 = Up
-
 show router isis prefix-sids               # 21001 / 21002 / 21100
-
 show router tunnel-table protocol isis     # tunnel to 10.1.1.2 (ANYsec's foundation)
-
 show service sdp                           # Up/Up
-
 show service id 1001 base                  # Epipe Oper Up
-
 show anysec mka-over-ip                    # Operational Status: in-service
-
 show anysec tunnel-encryption detail       # Peer Oper State: Up + counters
+show macsec connectivity-association "CA_ANYSEC" detail  # MACsec
 
 
 
